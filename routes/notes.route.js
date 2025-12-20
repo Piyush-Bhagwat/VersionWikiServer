@@ -1,43 +1,18 @@
 require("dotenv").config();
 const { Router } = require("express");
-const jwtVerify = require("../middleware/auth");
+cons = require("../middleware/auth");
 const { Note } = require("../models/note.model");
 const { getUser } = require("../services/user.service");
 const { getNote } = require("../services/note.service");
-const { createNote } = require("../controllers/note.controller");
+const { createNote, getUserNotes } = require("../controllers/note.controller");
+const jwtVerify = require("../middleware/auth");
 const notesRouter = Router();
 
-notesRouter.get("/", jwtVerify, async (req, res) => {
-    const { search } = req.query;
-    const uid = req.user.id;
-    const query = {};
+notesRouter.use(jwtVerify)
 
-    if (search) {
-        query.$or = [
-            { title: { $regex: search, $options: "i" } },
-            { content: { $regex: search, $options: "i" } },
-            { tag: { $regex: search, $options: "i" } },
-        ];
-    }
+notesRouter.get("/", getUserNotes);
 
-    const notes = await getNote.byUser(uid, query);
-
-    const formatted = notes.map((n) => {
-        return {
-            id: n._id,
-            title: n.title,
-            content: n.content,
-            tag: n.tag,
-            isPinned: n.pinned,
-            color: n.color,
-            updatedAt: n.updatedAt,
-            date: n.createdAt,
-        };
-    });
-    res.status(200).json(formatted);
-});
-
-notesRouter.get("/:id", jwtVerify, async (req, res) => {
+notesRouter.get("/:id", async (req, res) => {
     const id = req.params.id;
     const uid = req.user.id;
 
@@ -46,7 +21,7 @@ notesRouter.get("/:id", jwtVerify, async (req, res) => {
     res.json(note);
 });
 
-notesRouter.post("/", jwtVerify, createNote);
+notesRouter.post("/", createNote);
 
 notesRouter.patch("/pin/:id", async (req, res) => {
     const id = req.params.id;
@@ -76,14 +51,14 @@ notesRouter.patch("/color/:id", async (req, res) => {
     return res.status(200).json(note);
 });
 
-notesRouter.delete("/:id", jwtVerify, async (req, res) => {
+notesRouter.delete("/:id", async (req, res) => {
     const id = req.params.id;
 
     await Note.deleteOne({ _id: id, userID: req.user.id });
     return res.sendStatus(200);
 });
 
-notesRouter.patch("/tag/:id", jwtVerify, async (req, res) => {
+notesRouter.patch("/tag/:id", async (req, res) => {
     const id = req.params.id;
     const tag = req.body.tag;
 
@@ -98,7 +73,7 @@ notesRouter.patch("/tag/:id", jwtVerify, async (req, res) => {
     res.status(200).json(note);
 });
 
-notesRouter.patch("/:id", jwtVerify, async (req, res) => {
+notesRouter.patch("/:id", async (req, res) => {
     const id = req.params.id;
     const { title, content } = req.body;
     const note = await Note.findById(id);
@@ -108,7 +83,7 @@ notesRouter.patch("/:id", jwtVerify, async (req, res) => {
     res.status(200).json(note);
 });
 
-notesRouter.patch("/addViewer/:id", jwtVerify, async (req, res) => {
+notesRouter.patch("/addViewer/:id", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
     const usr = await getUser.byEmail(email);
@@ -125,7 +100,7 @@ notesRouter.patch("/addViewer/:id", jwtVerify, async (req, res) => {
     return res.status(200).json(note);
 });
 
-notesRouter.patch("/removeViewer/:id", jwtVerify, async (req, res) => {
+notesRouter.patch("/removeViewer/:id", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
     const usr = await getUser.byEmail(email);
@@ -143,7 +118,7 @@ notesRouter.patch("/removeViewer/:id", jwtVerify, async (req, res) => {
     return res.status(200).json(note);
 });
 
-notesRouter.patch("/addEditor/:id", jwtVerify, async (req, res) => {
+notesRouter.patch("/addEditor/:id", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
     const usr = await getUser.byEmail(email);
@@ -162,7 +137,7 @@ notesRouter.patch("/addEditor/:id", jwtVerify, async (req, res) => {
     return res.status(200).json(note);
 });
 
-notesRouter.patch("/removeEditor/:id", jwtVerify, async (req, res) => {
+notesRouter.patch("/removeEditor/:id", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
     const usr = await getUser.byEmail(email);

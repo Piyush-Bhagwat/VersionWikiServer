@@ -1,23 +1,24 @@
 const mongoose = require("mongoose");
 
-const versionSchema = mongoose.Schema(
+const versionSchema = new mongoose.Schema(
     {
         noteID: {
             type: mongoose.Schema.ObjectId,
             ref: "Note",
             required: true,
         },
-        content: String,
-        title: String,
+        content: { type: String, trim: true, default: "" },
+        title: { type: String, trim: true, default: "" },
+        tag: { type: String, trim: true },
         editedBy: {
             type: mongoose.Schema.ObjectId,
             ref: "User",
             required: true,
         },
-        commitMessage: String,
+        commitMessage: { type: String, trim: true },
     },
     { timestamps: true }
 );
 
 const Versions = mongoose.model("Version", versionSchema);
-module.exports = Versions;
+module.exports = {Versions};

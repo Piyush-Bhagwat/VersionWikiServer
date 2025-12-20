@@ -9,9 +9,12 @@ const getNote = {
         return note;
     },
     byUser: async (userId, filter) => {
-        const query = { ownerID: userId, filter };
+        const query = { ownerId: userId, ...filter };
 
-        const notes = await Note.find(query);
+        const notes = await Note.find(query).populate({
+            path: "versionId",
+            select: "content title tag",
+        });
         return notes;
     },
 };

@@ -16,6 +16,8 @@ function jwtVerify(req, res, next){
             }
 
             req.user = user;
+            console.log("User: ", user);
+            
             next();
         })
     } else {
