@@ -39,7 +39,43 @@ const noteModel = new mongoose.Schema(
             },
         ],
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        methods: {
+            async addEditor(editorId) {
+                if (this.editors.includes(editorId)) return;
+
+                this.viewers = this.viewers.filter(
+                    (id) => id.toString() !== editorId.toString()
+                );
+                this.editors.push(editorId);
+
+                await this.save();
+            },
+            async removeEditor(editorId) {
+                this.editors = this.editors.filter(
+                    (id) => id.toString() != editorId.toString()
+                );
+                await this.save();
+            },
+            async addViewer(viewerId) {
+                if (this.viewers.includes(viewerId)) return;
+
+                this.editors = this.editors.filter(
+                    (id) => id.toString() !== viewerId.toString()
+                );
+                this.viewers.push(viewerId);
+
+                await this.save();
+            },
+            async removeViewer(viewerId) {
+                this.viewers = this.viewers.filter(
+                    (id) => id.toString() !== viewerId.toString()
+                );
+                await this.save();
+            },
+        },
+    }
 );
 
 const Note = mongoose.model("Note", noteModel);
