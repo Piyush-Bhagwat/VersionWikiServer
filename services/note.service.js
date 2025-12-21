@@ -15,7 +15,7 @@ const getNote = {
             path: "versionId",
             select: "content title tag",
         });
-        return notes;
+        return notes.sort((a, b) => b.createdAt - a.createdAt);
     },
 };
 

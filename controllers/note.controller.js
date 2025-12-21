@@ -8,8 +8,6 @@ async function createNote(req, res) {
 
     console.log(req.body);
 
-    if (content === null || title === null) return res.sendStatus(401);
-
     const note = await Note.create({ ownerId: uid, color });
     const version = await Versions.create({
         content,
@@ -21,7 +19,6 @@ async function createNote(req, res) {
     });
 
     note.versionId = version._id;
-    note.pastVersions.push(version._id);
     await note.save();
 
     return res.status(200).json({
@@ -32,7 +29,7 @@ async function createNote(req, res) {
         isPinned: note.pinned,
         color: note.color,
         date: note.createdAt,
-        versionCount: note.versionCount,
+        versionCount: await Versions.countDocuments({ noteID: note._id }),
     });
 }
 
@@ -51,9 +48,9 @@ const getUserNotes = async (req, res) => {
 
     const notes = await getNote.byUser(uid, query);
     console.log("notes: ", notes);
-    
 
-    const formatted = notes.map((n) => {
+    const formatted = await notes.map(async (n) => {
+        const versionCount = await Versions.countDocuments({ noteID: n._id });
         return {
             id: n._id,
             title: n.versionId.title,
@@ -63,10 +60,10 @@ const getUserNotes = async (req, res) => {
             color: n.color,
             updatedAt: n.updatedAt,
             date: n.createdAt,
-            versionCount: n.versionCount
+            versionCount,
         };
     });
-    res.status(200).json(formatted);
+    res.status(200).json(notes);
 };
 
 module.exports = { createNote, getUserNotes };

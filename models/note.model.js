@@ -8,7 +8,6 @@ const noteModel = new mongoose.Schema(
             ref: "User",
             required: true,
         },
-        pastVersions: [{ type: mongoose.Schema.ObjectId, ref: "Version" }],
         versionId: {
             type: mongoose.Schema.ObjectId,
             ref: "Version",
@@ -74,13 +73,6 @@ const noteModel = new mongoose.Schema(
                     (id) => id.toString() !== viewerId.toString()
                 );
                 await this.save();
-            },
-        },
-        virtuals: {
-            versionCount: {
-                get() {
-                    return this.pastVersions.length;
-                },
             },
         },
     }
