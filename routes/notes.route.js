@@ -71,19 +71,46 @@ notesRouter.patch("/:id/viewer", async (req, res) => {
 
     const member = await getUser.byEmail(email);
 
-    if (member._id.toString() === note.ownerId.toString()) {
-        return res.status(400).json({ message: "Cannot add owner as member" });
-    }
-
     if (!member) {
         return res.status(404).json({ message: "User not found" });
     }
     const note = await getNote.byId(id);
     if (!note) return res.status(404).json({ message: "Note not found" });
+
+    if (member._id.toString() === note.ownerId.toString()) {
+        return res.status(400).json({ message: "Cannot add owner as member" });
+    }
+
     if (req.user.id.toString() !== note.ownerId.toString())
         return res.status(403).json({ message: "User not authorized" });
 
     await note.addViewer(member._id);
+    return res.status(200).json(note);
+});
+
+notesRouter.patch("/:id/editor", async (req, res) => {
+    const { email } = req.body;
+    const id = req.params.id;
+    if (!email) return res.status(400).json({ message: "email?" });
+
+    const member = await getUser.byEmail(email);
+
+    if (!member) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    const note = await getNote.byId(id);
+    if (!note) return res.status(404).json({ message: "Note not found" });
+
+    if (member._id.toString() === note.ownerId.toString()) {
+        return res.status(400).json({ message: "Cannot add owner as member" });
+    }
+
+    if (req.user.id.toString() !== note.ownerId.toString())
+        return res.status(403).json({ message: "User not authorized" });
+
+    await note.addEditor(member._id);
+
     return res.status(200).json(note);
 });
 
@@ -103,32 +130,6 @@ notesRouter.delete("/:id/member", async (req, res) => {
         return res.status(403).json({ message: "User not authorized" });
 
     await note.removeMember(member._id);
-
-    return res.status(200).json(note);
-});
-
-notesRouter.patch("/:id/editor", async (req, res) => {
-    const { email } = req.body;
-    const id = req.params.id;
-    if (!email) return res.status(400).json({ message: "email?" });
-
-    const member = await getUser.byEmail(email);
-
-    if (!member) {
-        return res.status(404).json({ message: "User not found" });
-    }
-
-    if (member._id.toString() === note.ownerId.toString()) {
-        return res.status(400).json({ message: "Cannot add owner as member" });
-    }
-
-    const note = await getNote.byId(id);
-    if (!note) return res.status(404).json({ message: "Note not found" });
-
-    if (req.user.id.toString() !== note.ownerId.toString())
-        return res.status(403).json({ message: "User not authorized" });
-
-    await note.addEditor(member._id);
 
     return res.status(200).json(note);
 });
