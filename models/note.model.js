@@ -1,6 +1,18 @@
 const mongoose = require("mongoose");
 const { User } = require("./user.model");
 
+const memberSchema = new mongoose.Schema({
+    id: mongoose.Schema.ObjectId,
+    role: {
+        type: String,
+        enum: ["viewer", "editor"],
+    },
+    status: {
+        type: String,
+        enum: ["pending", "active", "removed"],
+    },
+});
+
 const noteModel = new mongoose.Schema(
     {
         ownerId: {
@@ -25,54 +37,74 @@ const noteModel = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
-        editors: [
-            {
-                type: mongoose.Schema.ObjectId,
-                ref: "User",
-            },
-        ],
-
-        viewers: [
-            {
-                type: mongoose.Schema.ObjectId,
-                ref: "User",
-            },
-        ],
+        members: [memberSchema],
     },
     {
         timestamps: true,
         methods: {
             async addEditor(editorId) {
-                if (this.editors.includes(editorId)) return;
-
-                this.viewers = this.viewers.filter(
-                    (id) => id.toString() !== editorId.toString()
+                const existingMember = this.members.find(
+                    (mem) => mem.id.toString() === editorId.toString()
                 );
-                this.editors.push(editorId);
+                if (existingMember) {
+                    if (
+                        existingMember.role == "editor" &&
+                        existingMember.status == "active"
+                    ) {
+                        return;
+                    }
+                    existingMember.role = "editor";
+                    existingMember.status = "pending";
+                } else {
+                    this.members.push({
+                        id: editorId,
+                        status: "pending",
+                        role: "editor",
+                    });
+                }
 
                 await this.save();
             },
-            async removeEditor(editorId) {
-                this.editors = this.editors.filter(
-                    (id) => id.toString() != editorId.toString()
+            async removeMember(editorId) {
+                const member = this.members.find(
+                    (mem) => editorId.toString() == mem.id.toString()
                 );
+                if (member) {
+                    member.status = "removed";
+                }
                 await this.save();
             },
             async addViewer(viewerId) {
-                if (this.viewers.includes(viewerId)) return;
-
-                this.editors = this.editors.filter(
-                    (id) => id.toString() !== viewerId.toString()
+                const existingMember = this.members.find(
+                    (mem) => mem.id.toString() === viewerId.toString()
                 );
-                this.viewers.push(viewerId);
+                if (existingMember) {
+                    if (
+                        existingMember.role == "viewer" &&
+                        existingMember.status == "active"
+                    ) {
+                        return;
+                    }
+                    existingMember.role = "viewer";
+                    existingMember.status = "pending";
+                } else {
+                    this.members.push({
+                        id: viewerId,
+                        status: "pending",
+                        role: "viewer",
+                    });
+                }
 
                 await this.save();
             },
-            async removeViewer(viewerId) {
-                this.viewers = this.viewers.filter(
-                    (id) => id.toString() !== viewerId.toString()
+            async acceptInvite(userId) {
+                const member = this.members.find(
+                    (mem) => mem.id.toString() === userId.toString()
                 );
-                await this.save();
+                if (member && member.status === "pending") {
+                    member.status = "active";
+                    await this.save();
+                }
             },
         },
     }

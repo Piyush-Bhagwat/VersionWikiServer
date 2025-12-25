@@ -64,75 +64,71 @@ notesRouter.delete("/:id", async (req, res) => {
 
 notesRouter.patch("/:id", updateNoteVersion);
 
-notesRouter.patch("/addViewer/:id", async (req, res) => {
+notesRouter.patch("/:id/viewer", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
-    const usr = await getUser.byEmail(email);
+    if (!email) return res.status(400).json({ message: "email?" });
 
-    if (!usr) {
+    const member = await getUser.byEmail(email);
+
+    if (member._id.toString() === note.ownerId.toString()) {
+        return res.status(400).json({ message: "Cannot add owner as member" });
+    }
+
+    if (!member) {
         return res.status(404).json({ message: "User not found" });
     }
     const note = await getNote.byId(id);
     if (!note) return res.status(404).json({ message: "Note not found" });
-    if (req.user._id.toString() !== note.ownerId.toString())
+    if (req.user.id.toString() !== note.ownerId.toString())
         return res.status(403).json({ message: "User not authorized" });
 
-    await note.addViewer(usr._id);
+    await note.addViewer(member._id);
     return res.status(200).json(note);
 });
 
-notesRouter.patch("/removeViewer/:id", async (req, res) => {
+notesRouter.delete("/:id/member", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
-    const usr = await getUser.byEmail(email);
+    if (!email) return res.status(400).json({ message: "email?" });
 
-    if (!usr) {
+    const member = await getUser.byEmail(email);
+
+    if (!member) {
         return res.status(404).json({ message: "User not found" });
     }
     const note = await getNote.byId(id);
     if (!note) return res.status(404).json({ message: "Note not found" });
-    if (req.user._id.toString() !== note.ownerID.toString())
+    if (req.user.id.toString() !== note.ownerId.toString())
         return res.status(403).json({ message: "User not authorized" });
 
-    await note.removeViewer(usr._id);
-
-    return res.status(200).json(note);
-});
-
-notesRouter.patch("/addEditor/:id", async (req, res) => {
-    const { email } = req.body;
-    const id = req.params.id;
-    const usr = await getUser.byEmail(email);
-
-    if (!usr) {
-        return res.status(404).json({ message: "User not found" });
-    }
-    const note = await getNote.byId(id);
-    if (!note) return res.status(404).json({ message: "Note not found" });
-
-    if (req.user._id.toString() !== note.ownerID.toString())
-        return res.status(403).json({ message: "User not authorized" });
-
-    await note.addEditor(usr._id);
+    await note.removeMember(member._id);
 
     return res.status(200).json(note);
 });
 
-notesRouter.patch("/removeEditor/:id", async (req, res) => {
+notesRouter.patch("/:id/editor", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
-    const usr = await getUser.byEmail(email);
+    if (!email) return res.status(400).json({ message: "email?" });
 
-    if (!usr) {
+    const member = await getUser.byEmail(email);
+
+    if (!member) {
         return res.status(404).json({ message: "User not found" });
     }
+
+    if (member._id.toString() === note.ownerId.toString()) {
+        return res.status(400).json({ message: "Cannot add owner as member" });
+    }
+
     const note = await getNote.byId(id);
     if (!note) return res.status(404).json({ message: "Note not found" });
 
-    if (req.user._id.toString() !== note.ownerID.toString())
+    if (req.user.id.toString() !== note.ownerId.toString())
         return res.status(403).json({ message: "User not authorized" });
 
-    await note.removeEditor(usr._id);
+    await note.addEditor(member._id);
 
     return res.status(200).json(note);
 });

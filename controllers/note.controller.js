@@ -77,6 +77,12 @@ const updateNoteVersion = async (req, res) => {
     const note = await Note.findById(id).populate("versionId");
 
     if (!note) return res.status(404).json({ message: "Note not found" });
+    if (
+        note.ownerId.toString() != user.id.toString() &&
+        note.editors.every((e) => e.toString() != user.id.toString())
+    ) {
+        return res.status(403).json({ message: "unauthorized" });
+    }
 
     if (
         note.versionId.content == content.trim() &&
@@ -87,11 +93,6 @@ const updateNoteVersion = async (req, res) => {
             .status(200)
             .json({ message: "noting changed, no version created" });
     }
-    if (
-        note.ownerId.toString() != user.id.toString() &&
-        note.editors.every((e) => e.toString() != user.id.toString())
-    )
-        return res.status(403).json({ message: "unauthorized" });
 
     const newVersion = await Versions.create({
         title,
