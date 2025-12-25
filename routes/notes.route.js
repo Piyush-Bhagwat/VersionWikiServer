@@ -4,11 +4,15 @@ cons = require("../middleware/auth");
 const { Note } = require("../models/note.model");
 const { getUser } = require("../services/user.service");
 const { getNote } = require("../services/note.service");
-const { createNote, getUserNotes } = require("../controllers/note.controller");
+const {
+    createNote,
+    getUserNotes,
+    updateNoteVersion,
+} = require("../controllers/note.controller");
 const jwtVerify = require("../middleware/auth");
 const notesRouter = Router();
 
-notesRouter.use(jwtVerify)
+notesRouter.use(jwtVerify);
 
 notesRouter.get("/", getUserNotes);
 
@@ -58,30 +62,7 @@ notesRouter.delete("/:id", async (req, res) => {
     return res.sendStatus(200);
 });
 
-notesRouter.patch("/tag/:id", async (req, res) => {
-    const id = req.params.id;
-    const tag = req.body.tag;
-
-    console.log("tag updte: ", tag);
-
-    if (!tag) return res.sendStatus(404);
-
-    const note = await Note.findById(id);
-
-    note.tag = tag;
-    await note.save();
-    res.status(200).json(note);
-});
-
-notesRouter.patch("/:id", async (req, res) => {
-    const id = req.params.id;
-    const { title, content } = req.body;
-    const note = await Note.findById(id);
-    note.title = title;
-    note.content = content;
-    await note.save();
-    res.status(200).json(note);
-});
+notesRouter.patch("/:id", updateNoteVersion);
 
 notesRouter.patch("/addViewer/:id", async (req, res) => {
     const { email } = req.body;
@@ -93,7 +74,7 @@ notesRouter.patch("/addViewer/:id", async (req, res) => {
     }
     const note = await getNote.byId(id);
     if (!note) return res.status(404).json({ message: "Note not found" });
-    if (req.user._id.toString() !== note.ownerID.toString())
+    if (req.user._id.toString() !== note.ownerId.toString())
         return res.status(403).json({ message: "User not authorized" });
 
     await note.addViewer(usr._id);
