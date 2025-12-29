@@ -1,4 +1,4 @@
-const { default: mongoose } = require("mongoose");
+const { Schema, default: mongoose } = require("mongoose");
 
 const notificationSchema = new Schema(
     {
@@ -6,7 +6,9 @@ const notificationSchema = new Schema(
             type: mongoose.Schema.ObjectId,
             ref: "User",
             require: true,
+            index: true,
         },
+        
         type: {
             type: String,
             enum: [
@@ -38,4 +40,5 @@ const notificationSchema = new Schema(
     { timestamps: true }
 );
 
-export const Notification = mongoose.model("Notification", notificationSchema);
+const Notification = mongoose.model("Notification", notificationSchema);
+module.exports = { Notification };

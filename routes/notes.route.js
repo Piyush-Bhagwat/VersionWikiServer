@@ -10,6 +10,7 @@ const {
     updateNoteVersion,
 } = require("../controllers/note.controller");
 const jwtVerify = require("../middleware/auth");
+const { Notification } = require("../models/notification.model");
 const notesRouter = Router();
 
 notesRouter.use(jwtVerify);
@@ -65,7 +66,7 @@ notesRouter.delete("/:id", async (req, res) => {
 notesRouter.patch("/:id", updateNoteVersion);
 
 notesRouter.patch("/:id/viewer", async (req, res) => {
-    const { email } = req.body;
+    const { email, message } = req.body;
     const id = req.params.id;
     if (!email) return res.status(400).json({ message: "email?" });
 
@@ -85,6 +86,14 @@ notesRouter.patch("/:id/viewer", async (req, res) => {
         return res.status(403).json({ message: "User not authorized" });
 
     await note.addViewer(member._id);
+    await Notification.create({
+        recipieantId: member._id,
+        type: "note_invitation",
+        relatedNoteId: note._id,
+        role: "viewer",
+        actorId: req.user.id,
+        message,
+    });
     return res.status(200).json(note);
 });
 
@@ -110,6 +119,14 @@ notesRouter.patch("/:id/editor", async (req, res) => {
         return res.status(403).json({ message: "User not authorized" });
 
     await note.addEditor(member._id);
+    await Notification.create({
+        recipieantId: member._id,
+        type: "note_invitation",
+        relatedNoteId: note._id,
+        role: "editor",
+        message,
+        actorId: req.user.id,
+    });
 
     return res.status(200).json(note);
 });
@@ -132,7 +149,6 @@ notesRouter.delete("/:id/member", async (req, res) => {
         return res.status(403).json({ message: "User not authorized" });
 
     await note.removeMember(member._id);
-
     return res.status(200).json(note);
 });
 

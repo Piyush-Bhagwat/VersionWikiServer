@@ -3,6 +3,7 @@ const { Router } = require("express");
 const { User } = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const jwtVerify = require("../middleware/auth");
+const { default: ApiError } = require("../utils/apierror.util");
 
 const authRouter = Router();
 
@@ -18,9 +19,13 @@ authRouter.post("/login", async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: "5d" }
         );
-        return res.status(200).json({ name: u.name, token });
+        return res.sendResponse(
+            200,
+            { name: u.name, token },
+            "Login successfull"
+        );
     }
-    return res.sendStatus(404);
+    throw new ApiError(404, "User not found");
 });
 
 authRouter.get("/verify", jwtVerify, async (req, res) => {
@@ -32,11 +37,11 @@ authRouter.post("/register", async (req, res) => {
     // console.log("req: ", name);
 
     if (!email || !name || !password) {
-        return res.sendStatus(400);
+        throw new ApiError(400, "Missing Fields");
     }
     const exist = await User.findOne({ email });
     if (exist) {
-        return res.sendStatus(404);
+        throw new ApiError(400, "User alredy exists");
     }
 
     const user = await User.create({ name, email, password });
@@ -45,7 +50,7 @@ authRouter.post("/register", async (req, res) => {
         process.env.JWT_SECRET,
         { expiresIn: "5d" }
     );
-    return res.status(200).json({ token, name: user.name });
+    return res.sendResponse(200, { token, name: user.name }, "User registered");
 });
 
 authRouter.get("/:id", (req, res) => {

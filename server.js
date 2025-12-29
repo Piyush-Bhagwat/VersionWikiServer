@@ -4,11 +4,13 @@ const cors = require("cors");
 const { authRouter } = require("./routes/auth.routes");
 const notesRouter = require("./routes/notes.route");
 const { default: errorMiddleware } = require("./middleware/error.middleware");
+const { responseHandler } = require("./middleware/response.moddleware");
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(responseHandler);
 
 app.get("/", (req, res) => {
     res.status(200).send("notes api backend");
