@@ -3,6 +3,7 @@ const { connectDB } = require("./config/mongo.db");
 const cors = require("cors");
 const { authRouter } = require("./routes/auth.routes");
 const notesRouter = require("./routes/notes.route");
+const { default: errorMiddleware } = require("./middleware/error.middleware");
 const app = express();
 
 app.use(express.json());
@@ -21,3 +22,5 @@ app.listen(3612, async () => {
     await connectDB();
     console.log("Server Started.");
 });
+
+app.use(errorMiddleware);

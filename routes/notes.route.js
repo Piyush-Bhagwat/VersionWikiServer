@@ -114,6 +114,8 @@ notesRouter.patch("/:id/editor", async (req, res) => {
     return res.status(200).json(note);
 });
 
+//TODO: add notification collections for invites. accecpt decline logic. (claude mai hai sb kuch)
+
 notesRouter.delete("/:id/member", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
