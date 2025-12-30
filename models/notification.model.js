@@ -2,13 +2,13 @@ const { Schema, default: mongoose } = require("mongoose");
 
 const notificationSchema = new Schema(
     {
-        recipieantId: {
+        recipientId: {
             type: mongoose.Schema.ObjectId,
             ref: "User",
             require: true,
             index: true,
         },
-        
+
         type: {
             type: String,
             enum: [

@@ -11,6 +11,13 @@ const {
 } = require("../controllers/note.controller");
 const jwtVerify = require("../middleware/auth");
 const { Notification } = require("../models/notification.model");
+const { default: ApiError } = require("../utils/apierror.util");
+const {
+    NOTE_MESSAGES,
+    USER_MESSAGES,
+    AUTH_MESSAGES,
+    COMMON_MESSAGES,
+} = require("../constants/responseMessages");
 const notesRouter = Router();
 
 notesRouter.use(jwtVerify);
@@ -23,7 +30,7 @@ notesRouter.get("/:id", async (req, res) => {
 
     const note = await Note.findOne({ _id: id, userID: uid });
 
-    res.json(note);
+    res.sendResponse(200, note, NOTE_MESSAGES.FETCHED);
 });
 
 notesRouter.post("/", createNote);
@@ -33,12 +40,12 @@ notesRouter.patch("/pin/:id", async (req, res) => {
     const note = await Note.findById(id);
 
     if (!note) {
-        return res.sendStatus(404);
+        throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
 
     note.pinned = !note.pinned;
     await note.save();
-    return res.status(200).json(note);
+    return res.sendResponse(200, note, NOTE_MESSAGES.PINNED);
 });
 
 notesRouter.patch("/color/:id", async (req, res) => {
@@ -48,19 +55,19 @@ notesRouter.patch("/color/:id", async (req, res) => {
     const note = await Note.findById(id);
 
     if (!note) {
-        return res.sendStatus(404);
+        throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
 
     note.color = color;
     await note.save();
-    return res.status(200).json(note);
+    return res.sendResponse(200, note, NOTE_MESSAGES.UPDATED);
 });
 
 notesRouter.delete("/:id", async (req, res) => {
     const id = req.params.id;
 
     await Note.deleteOne({ _id: id, userID: req.user.id });
-    return res.sendStatus(200);
+    return res.sendResponse(200, {}, NOTE_MESSAGES.DELETED);
 });
 
 notesRouter.patch("/:id", updateNoteVersion);
@@ -68,59 +75,69 @@ notesRouter.patch("/:id", updateNoteVersion);
 notesRouter.patch("/:id/viewer", async (req, res) => {
     const { email, message } = req.body;
     const id = req.params.id;
-    if (!email) return res.status(400).json({ message: "email?" });
+    if (!email) {
+        throw new ApiError(400, "Email?");
+    }
 
     const member = await getUser.byEmail(email);
 
     if (!member) {
-        return res.status(404).json({ message: "User not found" });
+        throw new ApiError(404, USER_MESSAGES.NOT_FOUND);
     }
     const note = await getNote.byId(id);
-    if (!note) return res.status(404).json({ message: "Note not found" });
-
-    if (member._id.toString() === note.ownerId.toString()) {
-        return res.status(400).json({ message: "Cannot add owner as member" });
+    if (!note) {
+        throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
 
-    if (req.user.id.toString() !== note.ownerId.toString())
-        return res.status(403).json({ message: "User not authorized" });
+    if (member._id.toString() === note.ownerId.toString()) {
+        throw new ApiError(403, NOTE_MESSAGES.INVALID_MEMBER);
+    }
+
+    if (req.user.id.toString() !== note.ownerId.toString()) {
+        throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
+    }
 
     await note.addViewer(member._id);
     await Notification.create({
-        recipieantId: member._id,
+        recipientId: member._id,
         type: "note_invitation",
         relatedNoteId: note._id,
         role: "viewer",
         actorId: req.user.id,
         message,
     });
-    return res.status(200).json(note);
+    return res.sendResponse(201, note, NOTE_MESSAGES.VIEWER);
 });
 
 notesRouter.patch("/:id/editor", async (req, res) => {
-    const { email } = req.body;
+    const { email, message } = req.body;
     const id = req.params.id;
-    if (!email) return res.status(400).json({ message: "email?" });
+    if (!email) {
+        throw new ApiError(400, "Email?");
+    }
 
     const member = await getUser.byEmail(email);
 
     if (!member) {
-        return res.status(404).json({ message: "User not found" });
+        throw new ApiError(404, USER_MESSAGES.NOT_FOUND);
     }
 
     const note = await getNote.byId(id);
-    if (!note) return res.status(404).json({ message: "Note not found" });
-
-    if (member._id.toString() === note.ownerId.toString()) {
-        return res.status(400).json({ message: "Cannot add owner as member" });
+    if (!note) {
+        throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
 
-    if (req.user.id.toString() !== note.ownerId.toString())
-        return res.status(403).json({ message: "User not authorized" });
+    if (member._id.toString() === note.ownerId.toString()) {
+        throw new ApiError(403, NOTE_MESSAGES.INVALID_MEMBER);
+    }
+
+    if (req.user.id.toString() !== note.ownerId.toString()) {
+        throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
+    }
 
     await note.addEditor(member._id);
     await Notification.create({
-        recipieantId: member._id,
+        recipientId: member._id,
         type: "note_invitation",
         relatedNoteId: note._id,
         role: "editor",
@@ -128,7 +145,7 @@ notesRouter.patch("/:id/editor", async (req, res) => {
         actorId: req.user.id,
     });
 
-    return res.status(200).json(note);
+    return res.sendResponse(201, note, NOTE_MESSAGES.EDITOR);
 });
 
 //TODO: add notification collections for invites. accecpt decline logic. (claude mai hai sb kuch)
@@ -136,20 +153,25 @@ notesRouter.patch("/:id/editor", async (req, res) => {
 notesRouter.delete("/:id/member", async (req, res) => {
     const { email } = req.body;
     const id = req.params.id;
-    if (!email) return res.status(400).json({ message: "email?" });
+    if (!email) {
+        throw new ApiError(400, "Email?");
+    }
 
     const member = await getUser.byEmail(email);
 
     if (!member) {
-        return res.status(404).json({ message: "User not found" });
+        throw new ApiError(404, USER_MESSAGES.NOT_FOUND);
     }
     const note = await getNote.byId(id);
-    if (!note) return res.status(404).json({ message: "Note not found" });
-    if (req.user.id.toString() !== note.ownerId.toString())
-        return res.status(403).json({ message: "User not authorized" });
+    if (!note) {
+        throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
+    }
+    if (req.user.id.toString() !== note.ownerId.toString()) {
+        throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
+    }
 
     await note.removeMember(member._id);
-    return res.status(200).json(note);
+    return res.sendResponse(200, "Removed Member");
 });
 
 module.exports = notesRouter;

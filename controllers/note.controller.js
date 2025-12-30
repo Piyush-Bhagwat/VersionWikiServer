@@ -1,6 +1,13 @@
 const { Note } = require("../models/note.model");
 const { Versions } = require("../models/version.model");
 const { getNote } = require("../services/note.service");
+const {
+    NOTE_MESSAGES,
+    USER_MESSAGES,
+    AUTH_MESSAGES,
+    COMMON_MESSAGES,
+} = require("../constants/responseMessages");
+const { default: ApiError } = require("../utils/apierror.util");
 
 async function createNote(req, res) {
     const { title, content, color, tag } = req.body;
@@ -20,8 +27,7 @@ async function createNote(req, res) {
 
     note.versionId = version._id;
     await note.save();
-
-    return res.status(200).json({
+    const data = {
         id: note._id,
         title: version.title,
         content: version.content,
@@ -30,7 +36,8 @@ async function createNote(req, res) {
         color: note.color,
         date: note.createdAt,
         versionCount: await Versions.countDocuments({ noteID: note._id }),
-    });
+    };
+    return res.sendResponse(201, data, NOTE_MESSAGES.CREATED);
 }
 
 const getUserNotes = async (req, res) => {
@@ -67,7 +74,7 @@ const getUserNotes = async (req, res) => {
             };
         })
     );
-    res.status(200).json(formatted);
+    res.sendResponse(200, formatted, NOTE_MESSAGES.FETCHED);
 };
 
 const updateNoteVersion = async (req, res) => {
@@ -76,12 +83,14 @@ const updateNoteVersion = async (req, res) => {
     const { title, content, tag, commitMessage } = req.body;
     const note = await Note.findById(id).populate("versionId");
 
-    if (!note) return res.status(404).json({ message: "Note not found" });
+    if (!note) {
+        throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
+    }
     if (
         note.ownerId.toString() != user.id.toString() &&
         note.editors.every((e) => e.toString() != user.id.toString())
     ) {
-        return res.status(403).json({ message: "unauthorized" });
+        throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
     }
 
     if (
@@ -89,9 +98,7 @@ const updateNoteVersion = async (req, res) => {
         note.versionId.title == title &&
         note.versionId.tag == tag
     ) {
-        return res
-            .status(200)
-            .json({ message: "noting changed, no version created" });
+        return res.sendResponse(200, COMMON_MESSAGES.INVALID_UPDATEs);
     }
 
     const newVersion = await Versions.create({
@@ -106,7 +113,7 @@ const updateNoteVersion = async (req, res) => {
     note.versionId = newVersion._id;
     await note.save();
     const versionCount = await Versions.countDocuments({ noteID: note._id });
-    res.status(200).json({
+    const data = {
         id: note._id,
         title: newVersion.title,
         content: newVersion.content,
@@ -116,7 +123,8 @@ const updateNoteVersion = async (req, res) => {
         updatedAt: note.updatedAt,
         date: note.createdAt,
         versionCount,
-    });
+    };
+    res.sendResponse(200, data, NOTE_MESSAGES.UPDATED);
 };
 
 module.exports = { createNote, getUserNotes, updateNoteVersion };

@@ -43,8 +43,8 @@ const noteModel = new mongoose.Schema(
         timestamps: true,
         methods: {
             async addEditor(editorId) {
-                const existingMember = this.members.find(
-                    (mem) => mem.id.toString() === editorId.toString()
+                const existingMember = this.members.find((mem) =>
+                    mem.id.equals(editorId)
                 );
                 if (existingMember) {
                     if (

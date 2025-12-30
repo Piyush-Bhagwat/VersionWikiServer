@@ -5,6 +5,7 @@ const { authRouter } = require("./routes/auth.routes");
 const notesRouter = require("./routes/notes.route");
 const { default: errorMiddleware } = require("./middleware/error.middleware");
 const { responseHandler } = require("./middleware/response.moddleware");
+const { userRouter } = require("./routes/user.routes");
 const app = express();
 
 app.use(express.json());
@@ -18,6 +19,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/note", notesRouter);
+app.use("/api/user", userRouter);
 
 app.listen(3612, async () => {
     console.log("Starting server...");
