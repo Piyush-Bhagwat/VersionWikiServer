@@ -1,17 +1,20 @@
 const mongoose = require("mongoose");
 const { User } = require("./user.model");
 
-const memberSchema = new mongoose.Schema({
-    id: mongoose.Schema.ObjectId,
-    role: {
-        type: String,
-        enum: ["viewer", "editor"],
+const memberSchema = new mongoose.Schema(
+    {
+        id: mongoose.Schema.ObjectId,
+        role: {
+            type: String,
+            enum: ["viewer", "editor"],
+        },
+        status: {
+            type: String,
+            enum: ["pending", "active", "removed"],
+        },
     },
-    status: {
-        type: String,
-        enum: ["pending", "active", "removed"],
-    },
-});
+    { id: false }
+);
 
 const noteModel = new mongoose.Schema(
     {

@@ -8,6 +8,7 @@ const {
     createNote,
     getUserNotes,
     updateNoteVersion,
+    getNoteById,
 } = require("../controllers/note.controller");
 const jwtVerify = require("../middleware/auth");
 const { Notification } = require("../models/notification.model");
@@ -18,20 +19,14 @@ const {
     AUTH_MESSAGES,
     COMMON_MESSAGES,
 } = require("../constants/responseMessages");
+const { noteResponse } = require("../utils/response.util");
 const notesRouter = Router();
 
 notesRouter.use(jwtVerify);
 
 notesRouter.get("/", getUserNotes);
 
-notesRouter.get("/:id", async (req, res) => {
-    const id = req.params.id;
-    const uid = req.user.id;
-
-    const note = await Note.findOne({ _id: id, userID: uid });
-
-    res.sendResponse(200, note, NOTE_MESSAGES.FETCHED);
-});
+notesRouter.get("/:id", getNoteById);
 
 notesRouter.post("/", createNote);
 
@@ -92,8 +87,9 @@ notesRouter.patch("/:id/viewer", async (req, res) => {
     if (member._id.toString() === note.ownerId.toString()) {
         throw new ApiError(403, NOTE_MESSAGES.INVALID_MEMBER);
     }
+    // console.log("checkingg: ", req.user.id, note.ownerId);
 
-    if (req.user.id.toString() !== note.ownerId.toString()) {
+    if (req.user.id.toString() !== note.ownerId._id.toString()) {
         throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
     }
 
@@ -147,8 +143,6 @@ notesRouter.patch("/:id/editor", async (req, res) => {
 
     return res.sendResponse(201, note, NOTE_MESSAGES.EDITOR);
 });
-
-//TODO: add notification collections for invites. accecpt decline logic. (claude mai hai sb kuch)
 
 notesRouter.delete("/:id/member", async (req, res) => {
     const { email } = req.body;

@@ -6,6 +6,7 @@ const { Note } = require("../models/note.model");
 const {
     NOTE_MESSAGES,
     AUTH_MESSAGES,
+    USER_MESSAGES,
 } = require("../constants/responseMessages");
 
 const userRouter = Router();
@@ -14,7 +15,6 @@ userRouter.use(jwtVerify);
 userRouter.get("/notifications", async (req, res) => {
     const notifications = await Notification.find({
         recipientId: req.user.id,
-        isRead: false,
     })
         .populate("actorId", "name email")
         .populate("relatedNoteId", "color title")
@@ -23,17 +23,17 @@ userRouter.get("/notifications", async (req, res) => {
     return res.sendResponse(200, notifications, USER_MESSAGES.NOTIFICATIONS);
 });
 
-//TODO: add accept and reject logic
-
 userRouter.post("/notification/:id/accept", async (req, res) => {
     const { id } = req.params;
 
-    const notification = await Notification.find({ _id: id, isRead: false });
+    const notification = await Notification.findOne({ _id: id, isRead: false });
 
     if (!notification) {
         throw new ApiError(404, "notification not found");
     }
     const note = await Note.findById(notification.relatedNoteId);
+    // console.log(notification);
+
     if (!note) {
         throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
