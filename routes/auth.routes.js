@@ -4,6 +4,8 @@ const { User } = require("../models/user.model");
 const jwt = require("jsonwebtoken");
 const jwtVerify = require("../middleware/auth");
 const { default: ApiError } = require("../utils/apierror.util");
+const { getUser } = require("../services/user.service");
+const { USER_MESSAGES } = require("../constants/responseMessages");
 
 const authRouter = Router();
 
@@ -29,7 +31,11 @@ authRouter.post("/login", async (req, res) => {
 });
 
 authRouter.get("/verify", jwtVerify, async (req, res) => {
-    res.sendStatus(200);
+    const user = await getUser.byId(req.user.id);
+    if (!user) {
+        throw new ApiError(404, USER_MESSAGES.NOT_FOUND);
+    }
+    res.status(200).send({ message: "user verifed" });
 });
 
 authRouter.post("/register", async (req, res) => {
@@ -53,8 +59,8 @@ authRouter.post("/register", async (req, res) => {
     return res.sendResponse(200, { token, name: user.name }, "User registered");
 });
 
-authRouter.get("/:id", (req, res) => {
-    const id = req.params.id;
-});
+// authRouter.get("/:id", (req, res) => {
+//     const id = req.params.id;
+// });
 
 module.exports = { authRouter };
