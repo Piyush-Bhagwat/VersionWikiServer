@@ -6,7 +6,9 @@ const notesRouter = require("./routes/notes.route");
 const { default: errorMiddleware } = require("./middleware/error.middleware");
 const { responseHandler } = require("./middleware/response.moddleware");
 const { userRouter } = require("./routes/user.routes");
+const logger = require("js-logger");
 const app = express();
+logger.useDefaults();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -15,7 +17,7 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",").map((origin) =>
     origin.trim(),
 );
 
-console.log("Allowed origins: ", allowedOrigins);
+logger.info("Allowed origins: ", allowedOrigins);
 
 app.use(
     cors({
