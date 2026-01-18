@@ -22,9 +22,23 @@ logger.info("Allowed origins: ", allowedOrigins);
 app.use(
     cors({
         origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
+            logger.info("🔍 Incoming origin:", origin);
+            logger.info("🔍 Allowed origins:", allowedOrigins);
+
+            if (!origin) {
+                logger.info(
+                    "✅ No origin - allowing (likely same-origin or tool)",
+                );
+                callback(null, true);
+                return;
+            }
+
+            if (allowedOrigins.includes(origin)) {
+                logger.info("✅ Origin allowed:", origin);
                 callback(null, true);
             } else {
+                logger.error("❌ Origin NOT allowed:", origin);
+                logger.error("❌ Does not match any of:", allowedOrigins);
                 callback(new Error("Not allowed by CORS"));
             }
         },
@@ -34,6 +48,7 @@ app.use(
 app.use(responseHandler);
 
 app.get("/", (req, res) => {
+    logger.info("AllowedOrigins_:", allowedOrigins);
     res.status(200).json({ message: "notes api backend", allowedOrigins });
 });
 
