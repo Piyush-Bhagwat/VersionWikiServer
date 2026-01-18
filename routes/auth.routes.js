@@ -14,6 +14,9 @@ authRouter.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     const u = await User.findOne({ email, password }).lean();
+    if (!u) {
+        throw new ApiError(404, USER_MESSAGES.NOT_FOUND);
+    }
     const payload = { name: u.name, email: u.email, id: u._id };
     if (u) {
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
