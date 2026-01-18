@@ -43,6 +43,10 @@ app.use(
             }
         },
         credentials: false,
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"], // Add this
+        allowedHeaders: ["Content-Type", "Authorization"], // Add this
+        preflightContinue: false, // Add this
+        optionsSuccessStatus: 204, // Add this
     }),
 );
 app.use(responseHandler);
