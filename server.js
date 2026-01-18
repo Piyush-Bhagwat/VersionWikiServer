@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",").map((origin) =>
     origin.trim(),
-);
+) || ["https://version-wiki-client-git-pre-prod-abnormal.vercel.app/"];
 
 logger.info("Allowed origins: ", allowedOrigins);
 
