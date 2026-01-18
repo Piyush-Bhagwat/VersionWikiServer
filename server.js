@@ -30,7 +30,11 @@ app.use(responseHandler);
 
 app.get("/", (req, res) => {
     logger.info("AllowedOrigins_:", allowedOrigins);
-    res.status(200).json({ message: "notes api backend", allowedOrigins });
+    res.status(200).json({
+        message: "notes api backend",
+        allowedOrigins,
+        uri: process.env.MONGO_URI,
+    });
 });
 
 app.use("/api/auth", authRouter);
