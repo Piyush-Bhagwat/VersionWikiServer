@@ -1,5 +1,5 @@
 export function noteResponse(note, versionCount) {
-    console.log(note.versionId);
+    // console.log(note.versionId);
 
     return {
         id: note._id,

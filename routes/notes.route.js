@@ -61,7 +61,7 @@ notesRouter.patch("/color/:id", async (req, res) => {
 notesRouter.delete("/:id", async (req, res) => {
     const id = req.params.id;
 
-    await Note.deleteOne({ _id: id, userID: req.user.id });
+    await Note.deleteOne({ _id: id, ownerId: req.user.id });
     return res.sendResponse(200, {}, NOTE_MESSAGES.DELETED);
 });
 
@@ -127,7 +127,7 @@ notesRouter.patch("/:id/editor", async (req, res) => {
         throw new ApiError(403, NOTE_MESSAGES.INVALID_MEMBER);
     }
 
-    if (req.user.id.toString() !== note.ownerId.toString()) {
+    if (req.user.id.toString() !== note.ownerId._id.toString()) {
         throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
     }
 
@@ -160,7 +160,7 @@ notesRouter.delete("/:id/member", async (req, res) => {
     if (!note) {
         throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
-    if (req.user.id.toString() !== note.ownerId.toString()) {
+    if (req.user.id.toString() !== note.ownerId._id.toString()) {
         throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
     }
 

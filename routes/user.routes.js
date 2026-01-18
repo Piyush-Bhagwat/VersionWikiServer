@@ -8,6 +8,7 @@ const {
     AUTH_MESSAGES,
     USER_MESSAGES,
 } = require("../constants/responseMessages");
+const { getNote } = require("../services/note.service");
 
 const userRouter = Router();
 userRouter.use(jwtVerify);
@@ -17,10 +18,31 @@ userRouter.get("/notifications", async (req, res) => {
         recipientId: req.user.id,
     })
         .populate("actorId", "name email")
-        .populate("relatedNoteId", "color title")
+        .populate({
+            path: "relatedNoteId",
+            select: "color versionId",
+            populate: { path: "versionId", select: "title" },
+        })
         .sort({ createdAt: -1 });
 
     return res.sendResponse(200, notifications, USER_MESSAGES.NOTIFICATIONS);
+});
+
+userRouter.patch("/notification/:id/read", async (req, res) => {
+    const { id } = req.params;
+    const notification = await Notification.findByIdAndUpdate(
+        id,
+        {
+            isRead: true,
+        },
+        { new: true }
+    );
+
+    if (!notification) {
+        throw new ApiError(404, "Notification Not Found");
+    }
+
+    res.sendResponse(200, notification, "Notification read");
 });
 
 userRouter.post("/notification/:id/accept", async (req, res) => {
@@ -41,6 +63,15 @@ userRouter.post("/notification/:id/accept", async (req, res) => {
     const member = note.members.find((m) => m.id.toString() == req.user.id);
     notification.isRead = true;
     await notification.save();
+    await Notification.create({
+        recipientId: notification.actorId,
+        type: "invite_accepted",
+        relatedNoteId: note._id,
+        role: notification.role,
+        actorId: req.user.id,
+        message: `Notification accepted for ${note.title}`,
+    });
+
     if (member && member.status == "pending") {
         member.status = "active";
         await note.save();
@@ -50,11 +81,14 @@ userRouter.post("/notification/:id/accept", async (req, res) => {
     }
 });
 
-userRouter.post("/notifications/:notificationId/decline", async (req, res) => {
-    const notification = await Notification.findById(req.params.notificationId);
+userRouter.post("/notification/:notificationId/decline", async (req, res) => {
+    const notification = await Notification.find({
+        _id: req.params.notificationId,
+        isRead: false,
+    });
 
     if (!notification || notification.recipientId.toString() !== req.user.id) {
-        return res.status(404).json({ message: "Notification not found" });
+        throw new ApiError(404, "Notification not found");
     }
 
     const note = await getNote.byId(notification.relatedNoteId);
@@ -64,6 +98,15 @@ userRouter.post("/notifications/:notificationId/decline", async (req, res) => {
 
     notification.isRead = true;
     await notification.save();
+
+    await Notification.create({
+        recipientId: notification.actorId,
+        type: "invite_rejected",
+        relatedNoteId: note._id,
+        role: notification.role,
+        actorId: req.user.id,
+        message: `Notification accepted for ${note.title}`,
+    });
 
     return res.status(200).json({ message: "Invitation declined" });
 });

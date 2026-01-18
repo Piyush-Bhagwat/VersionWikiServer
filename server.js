@@ -22,7 +22,7 @@ app.use("/api/note", notesRouter);
 app.use("/api/user", userRouter);
 
 app.listen(3612, async () => {
-    console.log("Starting server...");
+    console.log("Starting server... on port 3612");
     await connectDB();
     console.log("Server Started.");
 });

@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const { Note } = require("../models/note.model");
 
 const getNote = {
@@ -11,15 +12,42 @@ const getNote = {
                     select: "name email",
                 },
             })
-            .populate("ownerId", "name email");
+            .populate("ownerId", "name email")
+            .populate({ path: "members.id", select: "name email" });
         if (!note) {
             return null;
         }
         return note;
     },
     byUser: async (userId, filter) => {
-        const query = { ownerId: userId, ...filter };
+        let query;
 
+        const userCondition = {
+            $or: [
+                { ownerId: userId },
+                {
+                    members: {
+                        $elemMatch: {
+                            id: mongoose.Types.ObjectId(userId),
+                            status: "active",
+                        },
+                    },
+                },
+            ],
+        };
+
+        if (filter.$or) {
+            query = {
+                $and: [
+                    userCondition,
+                    { $or: filter.$or }, // This searches in versionId fields
+                ],
+            };
+        } else {
+            // Simple case: just user condition
+            query = userCondition;
+        }
+        console.log("query", query);
         const notes = await Note.find(query)
             .populate({
                 path: "versionId",

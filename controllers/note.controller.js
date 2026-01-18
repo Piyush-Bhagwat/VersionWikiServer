@@ -14,7 +14,7 @@ async function createNote(req, res) {
     const { title, content, color, tag } = req.body;
     const uid = req.user.id;
 
-    console.log(req.body);
+    // console.log(req.body);
 
     const note = await Note.create({ ownerId: uid, color });
     const version = await Versions.create({
@@ -44,27 +44,66 @@ async function createNote(req, res) {
 const getUserNotes = async (req, res) => {
     const { search } = req.query;
     const uid = req.user.id;
-    const query = {};
+    let noteIds = [];
+    const visibilityQuery = {
+        $or: [
+            { ownerId: uid },
+            {
+                members: {
+                    $elemMatch: {
+                        id: uid,
+                        status: "active",
+                    },
+                },
+            },
+        ],
+        isDeleted: false,
+    };
 
     if (search) {
-        query.$or = [
-            { title: { $regex: search, $options: "i" } },
-            { content: { $regex: search, $options: "i" } },
-            { tag: { $regex: search, $options: "i" } },
-        ];
+        // First, find all versions that match the search criteria
+        const matchingVersions = await Versions.find({
+            $or: [
+                { title: { $regex: search, $options: "i" } },
+                { content: { $regex: search, $options: "i" } },
+                { tag: { $regex: search, $options: "i" } },
+            ],
+        }).select("noteID");
+
+        // Extract the noteIDs from matching versions
+        noteIds = matchingVersions.map((v) => v.noteID);
     }
 
-    const notes = await getNote.byUser(uid, query);
-    console.log("notes: ", notes);
+    // Build the query
+    let query = { ...visibilityQuery };
+
+    if (search && noteIds.length > 0) {
+        // Only get notes whose versionId matches our search results
+        query._id = { $in: noteIds };
+    } else if (search && noteIds.length === 0) {
+        // No versions matched, return empty array
+        res.sendResponse(200, [], NOTE_MESSAGES.FETCHED);
+        return;
+    }
+
+    const notes = await Note.find(query)
+        .populate({
+            path: "versionId",
+            select: "content title tag editedBy",
+            populate: {
+                path: "editedBy",
+                select: "name email",
+            },
+        })
+        .populate("ownerId", "name email")
+        .sort({ createdAt: -1 });
 
     const formatted = await Promise.all(
         notes.map(async (n) => {
-            const versionCount = await Versions.countDocuments({
-                noteID: n._id,
-            });
             return noteResponse(n);
         })
     );
+
     res.sendResponse(200, formatted, NOTE_MESSAGES.FETCHED);
 };
 
@@ -79,14 +118,16 @@ const updateNoteVersion = async (req, res) => {
     }
 
     const isMember = note.members.some((e) => {
-        return e.id.toString() == user.id.toString() && e.role == "editor";
+        return e.id._id.toString() == user.id.toString() && e.role == "editor";
     });
-    if (note.ownerId.toString() != user.id.toString() && !isMember) {
+    // console.log("idddddd", note.ownerId._id, user.id);
+
+    if (note.ownerId._id.toString() != user.id.toString() && !isMember) {
         throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
     }
 
     if (
-        note.versionId.content == content.trim() &&
+        note.versionId.content == content?.trim() &&
         note.versionId.title == title &&
         note.versionId.tag == tag
     ) {
@@ -104,15 +145,19 @@ const updateNoteVersion = async (req, res) => {
 
     note.versionId = newVersion._id;
     await note.save();
-    await note
-        .populate({
+    await note.populate([
+        {
             path: "versionId",
             populate: {
                 path: "editedBy",
                 select: "name email",
             },
-        })
-        .populate("ownerId", "name email");
+        },
+        {
+            path: "ownerId",
+            select: "name email",
+        },
+    ]);
     const versionCount = await Versions.countDocuments({ noteID: note._id });
     const data = noteResponse(note, versionCount);
     res.sendResponse(200, data, NOTE_MESSAGES.UPDATED);
@@ -124,22 +169,30 @@ const getNoteById = async (req, res) => {
 
     const note = await getNote.byId(id);
 
+    // console.log("memberss: ", note);
     if (!note) {
         throw new ApiError(404, NOTE_MESSAGES.NOT_FOUND);
     }
 
     const canView = note.members.some((m) => {
         return (
-            m.id.toString() === uid.toString() &&
+            m.id._id.toString() === uid.toString() &&
             (m.role == "viewer" || m.role == "editor")
         );
     });
 
-    if (!canView) {
+    // console.log("hellooo->", note.ownerId._id.toString(), uid);
+
+    if (note.ownerId._id.toString() !== uid && !canView) {
         throw new ApiError(403, AUTH_MESSAGES.UNAUTHORIZED);
     }
+    const versionCount = await Versions.countDocuments({ noteID: note._id });
 
-    res.sendResponse(200, noteResponse(note), NOTE_MESSAGES.FETCHED);
+    res.sendResponse(
+        200,
+        noteResponse(note, versionCount),
+        NOTE_MESSAGES.FETCHED
+    );
 };
 
 module.exports = { createNote, getUserNotes, updateNoteVersion, getNoteById };

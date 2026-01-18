@@ -3,7 +3,11 @@ const { User } = require("./user.model");
 
 const memberSchema = new mongoose.Schema(
     {
-        id: mongoose.Schema.ObjectId,
+        id: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User", // 👈 THIS is the missing piece
+            required: true,
+        },
         role: {
             type: String,
             enum: ["viewer", "editor"],
@@ -69,9 +73,12 @@ const noteModel = new mongoose.Schema(
                 await this.save();
             },
             async removeMember(editorId) {
-                const member = this.members.find(
-                    (mem) => editorId.toString() == mem.id.toString()
-                );
+                const member = this.members.find((mem) => {
+                    const memberId = mem.id._id || mem.id; // populated OR raw
+                    // console.log("note.model1", mem.id._id, editorId);
+                    return editorId.toString() == memberId.toString();
+                });
+                // console.log("note.model2", member);
                 if (member) {
                     member.status = "removed";
                 }

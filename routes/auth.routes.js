@@ -6,27 +6,28 @@ const jwtVerify = require("../middleware/auth");
 const { default: ApiError } = require("../utils/apierror.util");
 const { getUser } = require("../services/user.service");
 const { USER_MESSAGES } = require("../constants/responseMessages");
+const Emitter = require("../config/event.config");
 
 const authRouter = Router();
 
 authRouter.post("/login", async (req, res) => {
     const { email, password } = req.body;
-    console.log(email, password);
 
     const u = await User.findOne({ email, password }).lean();
-
+    const payload = { name: u.name, email: u.email, id: u._id };
     if (u) {
-        const token = jwt.sign(
-            { name: u.name, email: u.email, id: u._id },
-            process.env.JWT_SECRET,
-            { expiresIn: "5d" }
-        );
+        const token = jwt.sign(payload, process.env.JWT_SECRET, {
+            expiresIn: "5d",
+        });
+        console.log("user logged in ->", u.name);
+
         return res.sendResponse(
             200,
-            { name: u.name, token },
-            "Login successfull"
+            { ...payload, token },
+            "Login successfull",
         );
     }
+
     throw new ApiError(404, "User not found");
 });
 
@@ -54,7 +55,7 @@ authRouter.post("/register", async (req, res) => {
     const token = jwt.sign(
         { name: user.name, email: user.email, id: user._id },
         process.env.JWT_SECRET,
-        { expiresIn: "5d" }
+        { expiresIn: "5d" },
     );
     return res.sendResponse(200, { token, name: user.name }, "User registered");
 });
