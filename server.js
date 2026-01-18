@@ -43,3 +43,5 @@ app.listen(3612, async () => {
 });
 
 app.use(errorMiddleware);
+
+module.exports = app;
