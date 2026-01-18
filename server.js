@@ -19,12 +19,6 @@ logger.useDefaults();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) =>
-    origin.trim(),
-) || ["https://version-wiki-client-git-pre-prod-abnormal.vercel.app"];
-
-logger.info("Allowed origins: ", allowedOrigins);
-
 app.use(cors());
 app.use(responseHandler);
 
@@ -37,7 +31,8 @@ const ensureDbConnection = async () => {
     }
 };
 
-app.use(async (req, res, next) => { //vercel dont run app.listen
+app.use(async (req, res, next) => {
+    //vercel dont run app.listen
     try {
         await ensureDbConnection();
         next();
@@ -48,11 +43,8 @@ app.use(async (req, res, next) => { //vercel dont run app.listen
 });
 
 app.get("/", (req, res) => {
-    logger.info("AllowedOrigins_:", allowedOrigins);
     res.status(200).json({
         message: "notes api backend",
-        allowedOrigins,
-        uri: process.env.MONGO_URI,
     });
 });
 
