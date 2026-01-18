@@ -18,6 +18,13 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",").map((origin) =>
 ) || ["https://version-wiki-client-git-pre-prod-abnormal.vercel.app"];
 
 logger.info("Allowed origins: ", allowedOrigins);
+app.options(
+    "*",
+    cors({
+        origin: allowedOrigins,
+        credentials: false,
+    }),
+);
 
 app.use(
     cors({
