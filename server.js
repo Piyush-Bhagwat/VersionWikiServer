@@ -22,7 +22,7 @@ logger.info("Allowed origins: ", allowedOrigins);
 app.use(
     cors({
         origin: allowedOrigins,
-        credentials: true,
+        credentials: false,
     }),
 );
 app.use(responseHandler);
