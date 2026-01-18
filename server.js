@@ -13,7 +13,7 @@ logger.useDefaults();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",").map((origin) =>
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((origin) =>
     origin.trim(),
 ) || ["https://version-wiki-client-git-pre-prod-abnormal.vercel.app"];
 
