@@ -1,4 +1,5 @@
-const { Schema, default: mongoose } = require("mongoose");
+import mongoose, { Schema } from "mongoose";
+
 
 const notificationSchema = new Schema(
     {
@@ -41,4 +42,4 @@ const notificationSchema = new Schema(
 );
 
 const Notification = mongoose.model("Notification", notificationSchema);
-module.exports = { Notification };
+export { Notification };

@@ -1,4 +1,5 @@
-const { User } = require("../models/user.model");
+import { User } from "../models/user.model.js";
+
 
 const getUser = {
     byEmail: async (email) => {
@@ -21,4 +22,4 @@ const getUser = {
     },
 };
 
-module.exports = { getUser };
+export { getUser };

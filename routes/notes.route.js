@@ -1,25 +1,24 @@
-require("dotenv").config();
-const { Router } = require("express");
-cons = require("../middleware/auth");
-const { Note } = require("../models/note.model");
-const { getUser } = require("../services/user.service");
-const { getNote } = require("../services/note.service");
-const {
+import "dotenv/config.js";
+import { Router } from "express";
+import jwtVerify from "../middleware/auth.js";
+import { Note } from "../models/note.model.js";
+import { getUser } from "../services/user.service.js";
+import { getNote } from "../services/note.service.js";
+import {
     createNote,
     getUserNotes,
     updateNoteVersion,
     getNoteById,
-} = require("../controllers/note.controller");
-const jwtVerify = require("../middleware/auth");
-const { Notification } = require("../models/notification.model");
-const { default: ApiError } = require("../utils/apierror.util");
-const {
+} from "../controllers/note.controller.js";
+import { Notification } from "../models/notification.model.js";
+import ApiError from "../utils/apierror.util.js";
+import {
     NOTE_MESSAGES,
     USER_MESSAGES,
     AUTH_MESSAGES,
     COMMON_MESSAGES,
-} = require("../constants/responseMessages");
-const { noteResponse } = require("../utils/response.util");
+} from "../constants/responseMessages.js";
+import { noteResponse } from "../utils/response.util.js";
 const notesRouter = Router();
 
 notesRouter.use(jwtVerify);
@@ -168,4 +167,4 @@ notesRouter.delete("/:id/member", async (req, res) => {
     return res.sendResponse(200, "Removed Member");
 });
 
-module.exports = notesRouter;
+export default notesRouter;

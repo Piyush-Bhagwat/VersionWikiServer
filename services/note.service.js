@@ -1,5 +1,5 @@
-const { default: mongoose } = require("mongoose");
-const { Note } = require("../models/note.model");
+import mongoose from "mongoose";
+import { Note } from "../models/note.model.js";
 
 const getNote = {
     byId: async (id) => {
@@ -62,4 +62,4 @@ const getNote = {
     },
 };
 
-module.exports = { getNote };
+export { getNote };

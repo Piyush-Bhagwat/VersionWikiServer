@@ -1,5 +1,4 @@
-const mongoose = require("mongoose");
-const { User } = require("./user.model");
+import mongoose from "mongoose";
 
 const memberSchema = new mongoose.Schema(
     {
@@ -17,7 +16,7 @@ const memberSchema = new mongoose.Schema(
             enum: ["pending", "active", "removed"],
         },
     },
-    { id: false }
+    { id: false },
 );
 
 const noteModel = new mongoose.Schema(
@@ -51,7 +50,7 @@ const noteModel = new mongoose.Schema(
         methods: {
             async addEditor(editorId) {
                 const existingMember = this.members.find((mem) =>
-                    mem.id.equals(editorId)
+                    mem.id.equals(editorId),
                 );
                 if (existingMember) {
                     if (
@@ -86,7 +85,7 @@ const noteModel = new mongoose.Schema(
             },
             async addViewer(viewerId) {
                 const existingMember = this.members.find(
-                    (mem) => mem.id.toString() === viewerId.toString()
+                    (mem) => mem.id.toString() === viewerId.toString(),
                 );
                 if (existingMember) {
                     if (
@@ -109,7 +108,7 @@ const noteModel = new mongoose.Schema(
             },
             async acceptInvite(userId) {
                 const member = this.members.find(
-                    (mem) => mem.id.toString() === userId.toString()
+                    (mem) => mem.id.toString() === userId.toString(),
                 );
                 if (member && member.status === "pending") {
                     member.status = "active";
@@ -117,9 +116,8 @@ const noteModel = new mongoose.Schema(
                 }
             },
         },
-    }
+    },
 );
 
 const Note = mongoose.model("Note", noteModel);
-
-module.exports = { Note };
+export { Note };

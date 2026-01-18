@@ -1,12 +1,18 @@
-const express = require("express");
-const { connectDB } = require("./config/mongo.db");
-const cors = require("cors");
-const { authRouter } = require("./routes/auth.routes");
-const notesRouter = require("./routes/notes.route");
-const { default: errorMiddleware } = require("./middleware/error.middleware");
-const { responseHandler } = require("./middleware/response.moddleware");
-const { userRouter } = require("./routes/user.routes");
-const logger = require("js-logger");
+import express from "express";
+import { connectDB } from "./config/mongo.db.js";
+import cors from "cors";
+import { authRouter } from "./routes/auth.routes.js";
+import notesRouter from "./routes/notes.route.js";
+import errorMiddleware from "./middleware/error.middleware.js";
+import { responseHandler } from "./middleware/response.moddleware.js";
+import { userRouter } from "./routes/user.routes.js";
+import logger from "js-logger";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const app = express();
 logger.useDefaults();
 
@@ -39,4 +45,4 @@ app.listen(3612, async () => {
 
 app.use(errorMiddleware);
 
-module.exports = app;
+export default app;

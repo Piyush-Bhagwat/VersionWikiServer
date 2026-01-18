@@ -1,5 +1,7 @@
-const { verify } = require("jsonwebtoken");
-require("dotenv").config();
+import jwt from "jsonwebtoken";
+import { config } from "dotenv";
+
+config();
 
 function jwtVerify(req, res, next) {
     const header = req.headers.authorization;
@@ -9,7 +11,7 @@ function jwtVerify(req, res, next) {
         const token = header.split(" ")[1] || header;
         // console.log("Serect", process.env.JWT_SECRET);
 
-        verify(token, process.env.JWT_SECRET, (err, user) => {
+        jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
             if (err) {
                 res.sendStatus(403);
             }
@@ -24,4 +26,4 @@ function jwtVerify(req, res, next) {
     }
 }
 
-module.exports = jwtVerify;
+export default jwtVerify;

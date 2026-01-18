@@ -1,12 +1,12 @@
-require("dotenv").config();
-const { Router } = require("express");
-const { User } = require("../models/user.model");
-const jwt = require("jsonwebtoken");
-const jwtVerify = require("../middleware/auth");
-const { default: ApiError } = require("../utils/apierror.util");
-const { getUser } = require("../services/user.service");
-const { USER_MESSAGES } = require("../constants/responseMessages");
-const Emitter = require("../config/event.config");
+import "dotenv/config.js";
+import { Router } from "express";
+import { User } from "../models/user.model.js";
+import jwt from "jsonwebtoken";
+import jwtVerify from "../middleware/auth.js";
+import ApiError from "../utils/apierror.util.js";
+import { getUser } from "../services/user.service.js";
+import { USER_MESSAGES } from "../constants/responseMessages.js";
+import Emitter from "../config/event.config.js";
 
 const authRouter = Router();
 
@@ -64,4 +64,4 @@ authRouter.post("/register", async (req, res) => {
 //     const id = req.params.id;
 // });
 
-module.exports = { authRouter };
+export { authRouter };

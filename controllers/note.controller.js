@@ -1,14 +1,14 @@
-const { Note } = require("../models/note.model");
-const { Versions } = require("../models/version.model");
-const { getNote } = require("../services/note.service");
-const {
+import { Note } from "../models/note.model.js";
+import { Versions } from "../models/version.model.js";
+import { getNote } from "../services/note.service.js";
+import {
     NOTE_MESSAGES,
     USER_MESSAGES,
     AUTH_MESSAGES,
     COMMON_MESSAGES,
-} = require("../constants/responseMessages");
-const { default: ApiError } = require("../utils/apierror.util");
-const { noteResponse } = require("../utils/response.util");
+} from "../constants/responseMessages.js";
+import ApiError from "../utils/apierror.util.js";
+import { noteResponse } from "../utils/response.util.js";
 
 async function createNote(req, res) {
     const { title, content, color, tag } = req.body;
@@ -101,7 +101,7 @@ const getUserNotes = async (req, res) => {
     const formatted = await Promise.all(
         notes.map(async (n) => {
             return noteResponse(n);
-        })
+        }),
     );
 
     res.sendResponse(200, formatted, NOTE_MESSAGES.FETCHED);
@@ -191,8 +191,8 @@ const getNoteById = async (req, res) => {
     res.sendResponse(
         200,
         noteResponse(note, versionCount),
-        NOTE_MESSAGES.FETCHED
+        NOTE_MESSAGES.FETCHED,
     );
 };
 
-module.exports = { createNote, getUserNotes, updateNoteVersion, getNoteById };
+export { createNote, getUserNotes, updateNoteVersion, getNoteById };

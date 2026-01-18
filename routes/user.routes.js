@@ -1,14 +1,14 @@
-const { Router } = require("express");
-const jwtVerify = require("../middleware/auth");
-const { Notification } = require("../models/notification.model");
-const { default: ApiError } = require("../utils/apierror.util");
-const { Note } = require("../models/note.model");
-const {
+import { Router } from "express";
+import jwtVerify from "../middleware/auth.js";
+import { Notification } from "../models/notification.model.js";
+import ApiError from "../utils/apierror.util.js";
+import { Note } from "../models/note.model.js";
+import {
     NOTE_MESSAGES,
     AUTH_MESSAGES,
     USER_MESSAGES,
-} = require("../constants/responseMessages");
-const { getNote } = require("../services/note.service");
+} from "../constants/responseMessages.js";
+import { getNote } from "../services/note.service.js";
 
 const userRouter = Router();
 userRouter.use(jwtVerify);
@@ -111,4 +111,4 @@ userRouter.post("/notification/:notificationId/decline", async (req, res) => {
     return res.status(200).json({ message: "Invitation declined" });
 });
 
-module.exports = { userRouter };
+export { userRouter };
