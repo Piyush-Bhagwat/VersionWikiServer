@@ -28,6 +28,25 @@ logger.info("Allowed origins: ", allowedOrigins);
 app.use(cors());
 app.use(responseHandler);
 
+let dbConnected = false;
+const ensureDbConnection = async () => {
+    if (!dbConnected) {
+        await connectDB();
+        dbConnected = true;
+        console.log("✅ MongoDB connected");
+    }
+};
+
+app.use(async (req, res, next) => { //vercel dont run app.listen
+    try {
+        await ensureDbConnection();
+        next();
+    } catch (error) {
+        console.error("❌ DB Connection failed:", error);
+        res.status(500).json({ error: "Database connection failed" });
+    }
+});
+
 app.get("/", (req, res) => {
     logger.info("AllowedOrigins_:", allowedOrigins);
     res.status(200).json({
