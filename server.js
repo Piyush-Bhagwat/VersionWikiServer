@@ -21,14 +21,14 @@ logger.info("Allowed origins: ", allowedOrigins);
 app.options(
     "*",
     cors({
-        origin: allowedOrigins,
+        origin: "*",
         credentials: false,
     }),
 );
 
 app.use(
     cors({
-        origin: allowedOrigins,
+        origin: "*",
         credentials: false,
     }),
 );
