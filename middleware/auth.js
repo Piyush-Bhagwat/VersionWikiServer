@@ -8,7 +8,7 @@ function jwtVerify(req, res, next) {
     // console.log("header: ", header);
 
     if (header) {
-        const token = header.split(" ")[1] || header;
+        const token = header?.split(" ")[1] || header;
         // console.log("Serect", process.env.JWT_SECRET);
 
         jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
