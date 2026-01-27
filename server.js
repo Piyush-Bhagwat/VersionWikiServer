@@ -17,7 +17,7 @@ const app = express();
 logger.useDefaults();
 app.use(
     cors({
-        origin: "https://version-wiki-client-git-pre-prod-abnormal.vercel.app",
+        origin: "https://version-wiki-client.vercel.app",
         credentials: true,
     }),
 );
